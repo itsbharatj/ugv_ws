@@ -96,6 +96,8 @@ private:
 
     int laser_count_;
     int throttle_scans_;
+    int map_update_scan_interval_;
+    int scans_since_map_update_;
 
     std::shared_ptr<std::thread> transform_thread_;
 

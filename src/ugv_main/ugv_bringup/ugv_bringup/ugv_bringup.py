@@ -96,6 +96,9 @@ class BaseController:
     def base_json_ctrl(self, input_json):
         self.send_command(input_json)
 
+    def close(self):
+        self.ser.close()
+
 # ROS node class for bringing up the UGV system and publishing sensor data
 class ugv_bringup(Node):
     def __init__(self):
@@ -170,10 +173,18 @@ class ugv_bringup(Node):
 # Main function to initialize the ROS node and start spinning
 def main(args=None):
     rclpy.init(args=args)  # Initialize ROS
-    node = ugv_bringup()  # Create the UGV bringup node
-    rclpy.spin(node)  # Keep the node running
-    #node.destroy_node()  # (optional) Shutdown the node
-    rclpy.shutdown()  # Shutdown ROS
+    node = None
+    try:
+        node = ugv_bringup()  # Create the UGV bringup node
+        rclpy.spin(node)  # Keep the node running
+    except KeyboardInterrupt:
+        pass
+    finally:
+        if node is not None:
+            node.base_controller.close()
+            node.destroy_node()
+        if rclpy.ok():
+            rclpy.shutdown()  # Shutdown ROS
 
 if __name__ == '__main__':
     main()

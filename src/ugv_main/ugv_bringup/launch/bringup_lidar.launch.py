@@ -29,6 +29,12 @@ def generate_launch_description():
         description='LDLiDAR model: ld06, ld19, or stl27l'
     )
 
+    rf2o_publish_tf_arg = DeclareLaunchArgument(
+        'rf2o_publish_tf',
+        default_value='false',
+        description='Whether RF2O should publish odom to base_footprint TF'
+    )
+
     # Include the robot state launch from the ugv_description package
     robot_state_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -65,7 +71,10 @@ def generate_launch_description():
     rf2o_laser_odometry_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('rf2o_laser_odometry'), 'launch', 'rf2o_laser_odometry.launch.py')
-        )
+        ),
+        launch_arguments={
+            'publish_tf': LaunchConfiguration('rf2o_publish_tf'),
+        }.items()
     )
 
     # Define the base node with parameters
@@ -81,6 +90,7 @@ def generate_launch_description():
         use_rviz_arg,
         rviz_config_arg,
         ldlidar_model_arg,
+        rf2o_publish_tf_arg,
         robot_state_launch,
         bringup_node,
         driver_node,

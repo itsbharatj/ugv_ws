@@ -29,6 +29,8 @@ def generate_launch_description():
             'use_rviz': LaunchConfiguration('use_rviz'),
             'rviz_config': 'slam_2d',
             'ldlidar_model': LaunchConfiguration('ldlidar_model'),
+            'pub_odom_tf': 'false',
+            'rf2o_publish_tf': 'true',
         }.items()
     )
     

@@ -130,7 +130,8 @@ def main(args=None):
         if node is not None:
             node.destroy_node()
             node.ser.close()  # Close the serial connection
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 if __name__ == '__main__':
     main()

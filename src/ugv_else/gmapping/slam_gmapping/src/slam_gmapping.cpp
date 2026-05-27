@@ -25,6 +25,8 @@
 
 #include "tf2_ros/create_timer_ros.h"
 
+#include <cmath>
+
 #define MAP_IDX(sx, i, j) ((sx) * (j) + (i))
 
 using std::placeholders::_1;
@@ -65,6 +67,8 @@ void SlamGmapping::init() {
     transform_publish_period_ = 0.05;
 
     map_update_interval_ = tf2::durationFromSec(0.5);
+    map_update_scan_interval_ = 5;
+    scans_since_map_update_ = 0;
     maxUrange_ = 80.0;  maxRange_ = 0.0;
     minimum_score_ = 0;
     sigma_ = 0.05;
@@ -129,9 +133,10 @@ SlamGmapping::~SlamGmapping()
         transform_thread_->join();
     }
 
-    delete gsp_;
-    delete gsp_laser_;
-    delete gsp_odom_;
+    // This node owns the OpenSLAM objects for the full process lifetime.
+    // Destroying GridSlamProcessor during Ctrl-C shutdown can crash inside
+    // the upstream trajectory-tree cleanup after live mapping; the process is
+    // exiting, so leave these for the OS to reclaim.
 }
 
 bool SlamGmapping::getOdomPose(GMapping::OrientedPoint& gmap_pose, const rclcpp::Time& t)
@@ -317,7 +322,8 @@ bool SlamGmapping::addScan(const sensor_msgs::msg::LaserScan::ConstSharedPtr sca
         int num_ranges = static_cast<int>(scan->ranges.size());
         for (int i = 0; i < num_ranges; i++) {
             // Must filter out short readings, because the mapper won't
-            if (scan->ranges[num_ranges - i - 1] < scan->range_min)
+            if (!std::isfinite(scan->ranges[num_ranges - i - 1])
+                || scan->ranges[num_ranges - i - 1] < scan->range_min)
                 ranges_double[i] = (double) scan->range_max;
             else
                 ranges_double[i] = (double) scan->ranges[num_ranges - i - 1];
@@ -325,7 +331,7 @@ bool SlamGmapping::addScan(const sensor_msgs::msg::LaserScan::ConstSharedPtr sca
     } else {
         for (unsigned int i = 0; i < scan->ranges.size(); i++) {
             // Must filter out short readings, because the mapper won't
-            if (scan->ranges[i] < scan->range_min)
+            if (!std::isfinite(scan->ranges[i]) || scan->ranges[i] < scan->range_min)
                 ranges_double[i] = (double) scan->range_max;
             else
                 ranges_double[i] = (double) scan->ranges[i];
@@ -354,8 +360,6 @@ void SlamGmapping::laserCallback(sensor_msgs::msg::LaserScan::ConstSharedPtr sca
     if ((laser_count_ % throttle_scans_) != 0)
         return;
 
-    tf2::TimePoint last_map_update = tf2::TimePointZero;
-
     // We can't initialize the mapper until we've got the first scan
     if(!got_first_scan_)
     {
@@ -380,11 +384,11 @@ void SlamGmapping::laserCallback(sensor_msgs::msg::LaserScan::ConstSharedPtr sca
         map_to_odom_ = (odom_to_laser * laser_to_map).inverse();
         map_to_odom_mutex_.unlock();
 
-        tf2::TimePoint timestamp = tf2_ros::fromMsg(scan->header.stamp);
-        if(!got_map_ || (timestamp - last_map_update) > map_update_interval_)
+        scans_since_map_update_++;
+        if(!got_map_ || scans_since_map_update_ >= map_update_scan_interval_)
         {
             updateMap(scan);
-            last_map_update = tf2_ros::fromMsg(scan->header.stamp);
+            scans_since_map_update_ = 0;
         }
     }
 }
