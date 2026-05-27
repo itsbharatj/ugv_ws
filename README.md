@@ -16,43 +16,43 @@
     - First compilation on the virtual machine (compiling one by one on the pi or jetson)
         
         ```jsx
-        cd /home/ws/ugv_ws
+        cd ~/ugv_ws
         . build_first.sh
         ```
         
         build_first.sh content
         
         ```jsx
-        cd /home/ws/ugv_ws
+        cd ~/ugv_ws
+        source /opt/ros/humble/setup.bash
         colcon build --packages-select apriltag apriltag_msgs apriltag_ros cartographer costmap_converter_msgs costmap_converter emcl2 explore_lite openslam_gmapping slam_gmapping ldlidar rf2o_laser_odometry robot_pose_publisher teb_msgs teb_local_planner vizanti vizanti_cpp vizanti_demos vizanti_msgs vizanti_server ugv_base_node ugv_interface
-        colcon build --packages-select ugv_bringup ugv_chat_ai ugv_description ugv_gazebo ugv_nav ugv_slam ugv_tools ugv_vision ugv_web_app --symlink-install 
-        echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
-        echo "eval "$(register-python-argcomplete ros2)"" >> ~/.bashrc
-        echo "eval "$(register-python-argcomplete colcon)"" >> ~/.bashrc
-        echo "source /home/ws/ugv_ws/install/setup.bash" >> ~/.bashrc
-        source ~/.bashrc 
+        source install/setup.bash
+        colcon build --packages-select ugv_bringup ugv_chat_ai ugv_description ugv_gazebo ugv_nav ugv_slam ugv_tools ugv_vision ugv_web_app
+        source install/setup.bash
         ```
         
     - Daily compilation of virtual machines (one by one on the car)
         
         ```jsx
-        cd /home/ws/ugv_ws
+        cd ~/ugv_ws
         . build_common.sh
         ```
         
         build_common.sh content
         
         ```jsx
-        cd /home/ws/ugv_ws
+        cd ~/ugv_ws
+        source /opt/ros/humble/setup.bash
         colcon build --packages-select apriltag apriltag_msgs apriltag_ros cartographer costmap_converter_msgs costmap_converter emcl2 explore_lite openslam_gmapping slam_gmapping ldlidar rf2o_laser_odometry robot_pose_publisher teb_msgs teb_local_planner vizanti vizanti_cpp vizanti_demos vizanti_msgs vizanti_server ugv_base_node ugv_interface
-        colcon build --packages-select ugv_bringup ugv_chat_ai ugv_description ugv_gazebo ugv_nav ugv_slam ugv_tools ugv_vision ugv_web_app --symlink-install 
-        source install/setup.bash 
+        source install/setup.bash
+        colcon build --packages-select ugv_bringup ugv_chat_ai ugv_description ugv_gazebo ugv_nav ugv_slam ugv_tools ugv_vision ugv_web_app
+        source install/setup.bash
         ```
         
     - Compile apriltag
         
         ```jsx
-        cd /home/ws/ugv_ws
+        cd ~/ugv_ws
         . build_apriltag.sh
         ```
         
@@ -62,7 +62,7 @@
         cd /home/ws/ugv_ws/src/ugv_else/apriltag_ros/apriltag
         cmake -B build -DCMAKE_BUILD_TYPE=Release
         cmake --build build --target install
-        cd /home/ws/ugv_ws
+        cd ~/ugv_ws
         ```
         
 - Ubuntu software：

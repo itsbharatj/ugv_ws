@@ -6,8 +6,7 @@ BlobDetector::BlobDetector(const SimpleBlobDetector::Params& parameters) : param
 
 cv::Ptr<BlobDetector> BlobDetector::create(const cv::SimpleBlobDetector::Params& params)
 {
-  return cv::Ptr<BlobDetector> (new BlobDetector(params)); // compatibility with older versions
-  //return cv::makePtr<BlobDetector>(params);
+  return cv::makePtr<BlobDetector>(params);
 }
 
 void BlobDetector::detect(const cv::Mat& image, std::vector<cv::KeyPoint>& keypoints, const cv::Mat&)
@@ -190,4 +189,14 @@ void BlobDetector::findBlobs(const cv::Mat& image, const cv::Mat& binary_image, 
 void BlobDetector::updateParameters(const Params& parameters)
 {
   params_ = parameters;
+}
+
+void BlobDetector::setParams(const cv::SimpleBlobDetector::Params& params)
+{
+  params_ = params;
+}
+
+cv::SimpleBlobDetector::Params BlobDetector::getParams() const
+{
+  return params_;
 }

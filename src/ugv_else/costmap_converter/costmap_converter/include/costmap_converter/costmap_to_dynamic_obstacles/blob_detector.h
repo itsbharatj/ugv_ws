@@ -92,6 +92,10 @@ public:
   //! Update internal parameters
   void updateParameters(const cv::SimpleBlobDetector::Params& parameters);
 
+  //! OpenCV 4.x requires these accessors to be implemented by subclasses.
+  void setParams(const cv::SimpleBlobDetector::Params& params) override;
+  cv::SimpleBlobDetector::Params getParams() const override;
+
 protected:
   struct Center
   {
