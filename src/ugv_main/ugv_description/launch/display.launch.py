@@ -2,7 +2,6 @@ import os
 from launch import LaunchDescription
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
-from launch_ros.substitutions import FindPackageShare
 from ament_index_python.packages import get_package_share_directory
 from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.conditions import IfCondition, UnlessCondition
@@ -42,12 +41,20 @@ def get_rviz_config_file(context):
 def launch_setup(context, *args, **kwargs):
 
     rviz_config = context.launch_configurations['rviz_config']
-    UGV_MODEL = os.environ['UGV_MODEL']
-    urdf_file_name = UGV_MODEL + '.urdf'
+    ugv_model = context.launch_configurations['model']
+    urdf_file_name = ugv_model + '.urdf'
     urdf_model_path = os.path.join(
         get_package_share_directory('ugv_description'),
         'urdf', 
-        urdf_file_name)      
+        urdf_file_name)
+
+    if not os.path.exists(urdf_model_path):
+        raise FileNotFoundError(
+            f"UGV model '{ugv_model}' does not exist. Expected URDF at {urdf_model_path}"
+        )
+
+    with open(urdf_model_path, 'r') as urdf_file:
+        robot_description = urdf_file.read()
         
     # Determine whether to use the joint_state_publisher_gui based on the rviz configuration
     use_joint_state_publisher_gui = 'true' if rviz_config == 'description' else context.launch_configurations.get('use_joint_state_publisher_gui', 'false')
@@ -57,7 +64,8 @@ def launch_setup(context, *args, **kwargs):
         package='robot_state_publisher',
         executable='robot_state_publisher',
         namespace='ugv',
-        arguments=[urdf_model_path]
+        output='screen',
+        parameters=[{'robot_description': robot_description}]
     )
 
     # Define the joint_state_publisher_gui node if the GUI is enabled
@@ -66,7 +74,7 @@ def launch_setup(context, *args, **kwargs):
         executable='joint_state_publisher_gui',
         namespace='ugv',
         name='joint_state_publisher_gui',
-        arguments=[urdf_model_path],
+        parameters=[{'robot_description': robot_description}],
         condition=IfCondition(use_joint_state_publisher_gui)
     )
 
@@ -76,7 +84,7 @@ def launch_setup(context, *args, **kwargs):
         executable='joint_state_publisher',
         namespace='ugv',
         name='joint_state_publisher',
-        arguments=[urdf_model_path],
+        parameters=[{'robot_description': robot_description}],
         condition=UnlessCondition(use_joint_state_publisher_gui)
     )
 
@@ -103,11 +111,15 @@ def launch_setup(context, *args, **kwargs):
 
 # Function to generate the launch description with configurable arguments
 def generate_launch_description():
+    default_model = os.environ.get('UGV_MODEL', 'ugv_rover')
+
     return LaunchDescription([
+        # Argument to specify which robot model URDF to load
+        DeclareLaunchArgument('model', default_value=default_model, description='Robot model URDF basename without .urdf'),
         # Argument to specify whether to use the joint_state_publisher GUI
         DeclareLaunchArgument('use_joint_state_publisher_gui', default_value='false', description='Whether to launch joint_state_publisher GUI'),
         # Argument to specify whether to use RViz
-        DeclareLaunchArgument('use_rviz', default_value='false', description='Whether to launch RViz2'),
+        DeclareLaunchArgument('use_rviz', default_value='true', description='Whether to launch RViz2'),
         # Argument to specify which RViz configuration to use
         DeclareLaunchArgument('rviz_config', default_value='description', description='Choose which rviz configuration to use: description, bringup, slam_2d, slam_3d, nav_2d, nav_3d'),
         # Opaque function to execute the setup
