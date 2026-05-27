@@ -14,6 +14,12 @@ def generate_launch_description():
     # Declare launch argument for whether to launch RViz2
     use_rviz_arg = DeclareLaunchArgument('use_rviz', default_value='false',
                                      description='Whether to launch RViz2')
+
+    ldlidar_model_arg = DeclareLaunchArgument(
+        'ldlidar_model',
+        default_value=os.environ.get('LDLIDAR_MODEL', 'ld19'),
+        description='LDLiDAR model: ld06, ld19, or stl27l'
+    )
                                      
     # Include launch description for bringup_lidar.launch.py
     bringup_lidar_launch = IncludeLaunchDescription(PythonLaunchDescriptionSource(
@@ -22,6 +28,7 @@ def generate_launch_description():
         launch_arguments={
             'use_rviz': LaunchConfiguration('use_rviz'),
             'rviz_config': 'slam_2d',
+            'ldlidar_model': LaunchConfiguration('ldlidar_model'),
         }.items()
     )
     
@@ -40,6 +47,7 @@ def generate_launch_description():
     # Return launch description
     return LaunchDescription([
         use_rviz_arg,
+        ldlidar_model_arg,
         bringup_lidar_launch, 
         robot_pose_publisher_launch,
         gmapping_launch

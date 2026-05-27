@@ -23,6 +23,12 @@ def generate_launch_description():
         description='Choose which rviz configuration to use'
     )
 
+    ldlidar_model_arg = DeclareLaunchArgument(
+        'ldlidar_model',
+        default_value=os.environ.get('LDLIDAR_MODEL', 'ld19'),
+        description='LDLiDAR model: ld06, ld19, or stl27l'
+    )
+
     # Include the robot state launch from the ugv_description package
     robot_state_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -49,7 +55,10 @@ def generate_launch_description():
     laser_bringup_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory('ldlidar'), 'launch', 'ldlidar.launch.py')
-        )
+        ),
+        launch_arguments={
+            'ldlidar_model': LaunchConfiguration('ldlidar_model'),
+        }.items()
     )
 
     # Include laser odometry launch file
@@ -71,6 +80,7 @@ def generate_launch_description():
         pub_odom_tf_arg,
         use_rviz_arg,
         rviz_config_arg,
+        ldlidar_model_arg,
         robot_state_launch,
         bringup_node,
         driver_node,

@@ -16,7 +16,7 @@ setup(
         (os.path.join('share', package_name, 'rviz'), glob(os.path.join('rviz', '*'))),
         (os.path.join('share', package_name, 'param'), glob(os.path.join('param', '*.yaml'))),
     ],
-    install_requires=['setuptools'],
+    install_requires=['setuptools', 'pyserial'],
     zip_safe=True,
     maintainer='dudu',
     maintainer_email='dudu@todo.todo',

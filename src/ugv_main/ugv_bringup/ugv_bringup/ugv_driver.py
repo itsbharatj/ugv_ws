@@ -14,17 +14,26 @@ def is_jetson():
     result = any("ugv_jetson" in root for root, dirs, files in os.walk("/"))
     return result
 
-if is_jetson():
-    serial_port = '/dev/ttyTHS1'
-else:
-    serial_port = '/dev/ttyAMA0'
-
-# Initialize serial communication with the UGV
-ser = serial.Serial(serial_port, 115200, timeout=1)
+def default_serial_port():
+    env_port = os.environ.get('UGV_SERIAL_PORT')
+    if env_port:
+        return env_port
+    if is_jetson():
+        return '/dev/ttyTHS1'
+    for candidate in ('/dev/ttyAMA0', '/dev/ttyUSB0', '/dev/ttyACM0'):
+        if os.path.exists(candidate):
+            return candidate
+    return '/dev/ttyAMA0'
 
 class UgvDriver(Node):
     def __init__(self, name):
         super().__init__(name)
+        self.declare_parameter('serial_port', default_serial_port())
+        self.declare_parameter('serial_baudrate', 115200)
+        self.serial_port = self.get_parameter('serial_port').get_parameter_value().string_value
+        self.serial_baudrate = self.get_parameter('serial_baudrate').get_parameter_value().integer_value
+        self.ser = serial.Serial(self.serial_port, self.serial_baudrate, timeout=1)
+        self.get_logger().info(f"Connected UGV driver serial port {self.serial_port} at {self.serial_baudrate}")
 
         # Subscribe to velocity commands (cmd_vel topic)
         self.cmd_vel_sub_ = self.create_subscription(Twist, "cmd_vel", self.cmd_vel_callback, 10)
@@ -52,7 +61,7 @@ class UgvDriver(Node):
 
         # Send the velocity data to the UGV as a JSON string
         data = json.dumps({'T': '13', 'X': linear_velocity, 'Z': angular_velocity}) + "\n"
-        ser.write(data.encode())
+        self.ser.write(data.encode())
 
     # Callback for processing joint state updates
     def joint_states_callback(self, msg):
@@ -83,7 +92,7 @@ class UgvDriver(Node):
             "SY": 600,
         }) + "\n"
                 
-        ser.write(joint_data.encode())
+        self.ser.write(joint_data.encode())
 
     # Callback for processing LED control commands
     def led_ctrl_callback(self, msg):
@@ -97,7 +106,7 @@ class UgvDriver(Node):
             "IO5": IO5,
         }) + "\n"
                 
-        ser.write(led_ctrl_data.encode())
+        self.ser.write(led_ctrl_data.encode())
 
     # Callback for processing voltage data
     def voltage_callback(self, msg):
@@ -110,6 +119,7 @@ class UgvDriver(Node):
 
 def main(args=None):
     rclpy.init(args=args)
+    node = None
     node = UgvDriver("ugv_driver")
     
     try:
@@ -117,9 +127,10 @@ def main(args=None):
     except KeyboardInterrupt:
         pass  # Graceful shutdown on user interrupt
     finally:
-        node.destroy_node()
+        if node is not None:
+            node.destroy_node()
+            node.ser.close()  # Close the serial connection
         rclpy.shutdown()
-        ser.close()  # Close the serial connection
 
 if __name__ == '__main__':
     main()
