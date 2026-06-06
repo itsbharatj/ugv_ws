@@ -1,5 +1,15 @@
 # ugv_ws Workspace Description (Stable)
 
+## Remote Desktop
+
+For a secure TigerVNC virtual desktop on Ubuntu 22.04+ or Debian 12+, see
+[docs/vnc.md](docs/vnc.md). The installer uses SSH tunneling by default and
+does not modify the local display manager.
+
+```bash
+./setup_vnc.sh
+```
+
 1.Environment
 
 - pc software：VMware Workstation 17Pro、mobarxterm
