@@ -59,6 +59,9 @@ def launch_setup(context, *args, **kwargs):
         launch_arguments={
             'use_rviz': LaunchConfiguration('use_rviz'),
             'rviz_config': 'nav_2d', 
+            'ldlidar_model': LaunchConfiguration('ldlidar_model'),
+            'pub_odom_tf': 'false',
+            'rf2o_publish_tf': 'true',
         }.items()
     )
 
@@ -68,6 +71,7 @@ def launch_setup(context, *args, **kwargs):
         launch_arguments={
             'map': map_yaml_path,
             'params_file': param_file,
+            'use_composition': 'False',
         }.items(),
         condition=LaunchConfigurationEquals('use_localization', 'amcl')
     )
@@ -77,7 +81,8 @@ def launch_setup(context, *args, **kwargs):
         PythonLaunchDescriptionSource(os.path.join(ugv_nav_dir, 'launch/nav_bringup', 'nav2_bringup.launch.py')),
         launch_arguments={
             'map': map_yaml_path,
-            'params_file': param_file
+            'params_file': param_file,
+            'use_composition': 'False',
         }.items(),
         condition=LaunchConfigurationEquals('use_localization', 'emcl')
     )
@@ -119,9 +124,21 @@ def launch_setup(context, *args, **kwargs):
 # Function to generate the launch description
 def generate_launch_description():
     # Return the launch description
+    ugv_nav_dir = get_package_share_directory('ugv_nav')
     return LaunchDescription([
-        DeclareLaunchArgument('use_localplan', default_value='teb', description='Choose which localplan to use: dwa,teb'),
+        DeclareLaunchArgument('use_localplan', default_value='dwa', description='Choose which localplan to use: dwa,teb'),
         DeclareLaunchArgument('use_localization', default_value='amcl', description='Choose which use_localization to use: amcl,cartographer'),
+        DeclareLaunchArgument('use_rviz', default_value='false', description='Whether to launch RViz2'),
+        DeclareLaunchArgument(
+            'map',
+            default_value=os.path.join(ugv_nav_dir, 'maps', 'map.yaml'),
+            description='Full path to map yaml file to load'
+        ),
+        DeclareLaunchArgument(
+            'ldlidar_model',
+            default_value=os.environ.get('LDLIDAR_MODEL', 'ld19'),
+            description='LDLiDAR model: ld06, ld19, or stl27l'
+        ),
         OpaqueFunction(function=launch_setup)
     ])
 

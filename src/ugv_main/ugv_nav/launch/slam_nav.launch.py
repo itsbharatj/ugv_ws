@@ -22,7 +22,6 @@ def generate_launch_description():
     # Create the launch configuration variables
     namespace = LaunchConfiguration('namespace')
     use_namespace = LaunchConfiguration('use_namespace')
-    slam = LaunchConfiguration('slam')
     use_sim_time = LaunchConfiguration('use_sim_time')
     params_file = LaunchConfiguration('params_file')
     autostart = LaunchConfiguration('autostart')
@@ -56,11 +55,6 @@ def generate_launch_description():
         default_value='false',
         description='Whether to apply a namespace to the navigation stack')
 
-    declare_slam_cmd = DeclareLaunchArgument(
-        'slam',
-        default_value='True',
-        description='Whether run a SLAM')
-
     declare_use_sim_time_cmd = DeclareLaunchArgument(
         'use_sim_time',
         default_value='false',
@@ -76,7 +70,7 @@ def generate_launch_description():
         description='Automatically startup the nav2 stack')
 
     declare_use_composition_cmd = DeclareLaunchArgument(
-        'use_composition', default_value='True',
+        'use_composition', default_value='False',
         description='Whether to use composed bringup')
 
     declare_use_respawn_cmd = DeclareLaunchArgument(
@@ -86,13 +80,29 @@ def generate_launch_description():
     declare_log_level_cmd = DeclareLaunchArgument(
         'log_level', default_value='info',
         description='log level')
+
+    declare_use_rviz_cmd = DeclareLaunchArgument(
+        'use_rviz', default_value='false',
+        description='Whether to launch RViz2')
+
+    declare_ldlidar_model_cmd = DeclareLaunchArgument(
+        'ldlidar_model',
+        default_value=os.environ.get('LDLIDAR_MODEL', 'ld19'),
+        description='LDLiDAR model: ld06, ld19, or stl27l')
     
     bringup_lidar_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(get_package_share_directory('ugv_bringup'), 'launch', 'bringup_lidar.launch.py')),
         launch_arguments={
             'use_rviz': LaunchConfiguration('use_rviz'),
             'rviz_config': 'nav_2d',  
+            'ldlidar_model': LaunchConfiguration('ldlidar_model'),
+            'pub_odom_tf': 'false',
+            'rf2o_publish_tf': 'true',
         }.items()
+    )
+
+    gmapping_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(os.path.join(get_package_share_directory('slam_gmapping'), 'launch', 'mapping.launch.py'))
     )
     
     robot_pose_publisher_launch = IncludeLaunchDescription(PythonLaunchDescriptionSource(
@@ -117,15 +127,6 @@ def generate_launch_description():
             output='screen'),
 
         IncludeLaunchDescription(
-            PythonLaunchDescriptionSource(os.path.join(launch_dir, 'slam_launch.py')),
-            condition=IfCondition(slam),
-            launch_arguments={'namespace': namespace,
-                              'use_sim_time': use_sim_time,
-                              'autostart': autostart,
-                              'use_respawn': use_respawn,
-                              'params_file': params_file}.items()),
-
-        IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(launch_dir, 'navigation_launch.py')),
             launch_arguments={'namespace': namespace,
                               'use_sim_time': use_sim_time,
@@ -144,17 +145,18 @@ def generate_launch_description():
     # Declare the launch options
     ld.add_action(declare_namespace_cmd)
     ld.add_action(declare_use_namespace_cmd)
-    ld.add_action(declare_slam_cmd)
     ld.add_action(declare_use_sim_time_cmd)
     ld.add_action(declare_params_file_cmd)
     ld.add_action(declare_autostart_cmd)
     ld.add_action(declare_use_composition_cmd)
     ld.add_action(declare_use_respawn_cmd)
     ld.add_action(declare_log_level_cmd)
+    ld.add_action(declare_use_rviz_cmd)
+    ld.add_action(declare_ldlidar_model_cmd)
 
     # Add the actions to launch all of the navigation nodes
     ld.add_action(bringup_lidar_launch)
+    ld.add_action(gmapping_launch)
     ld.add_action(robot_pose_publisher_launch)
     ld.add_action(bringup_cmd_group)
     return ld
-

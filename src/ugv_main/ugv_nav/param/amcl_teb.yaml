@@ -30,7 +30,7 @@ amcl:
     save_pose_rate: 0.5
     sigma_hit: 0.2
     tf_broadcast: true
-    transform_tolerance: 1.0
+    transform_tolerance: 0.2
     update_min_a: 0.2
     update_min_d: 0.25
     z_hit: 0.5
@@ -60,8 +60,8 @@ bt_navigator:
   ros__parameters:
     use_sim_time: False
     global_frame: map
-    robot_base_frame: base_link
-    odom_topic: /odom
+    robot_base_frame: base_footprint
+    odom_topic: /odom_rf2o
     bt_loop_duration: 10
     default_server_timeout: 20
     enable_groot_monitoring: True
@@ -111,7 +111,7 @@ bt_navigator_rclcpp_node:
 controller_server:
   ros__parameters:
     use_sim_time: False
-    ontroller_frequency: 20.0
+    controller_frequency: 20.0
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.5
     min_theta_velocity_threshold: 0.001
@@ -164,7 +164,7 @@ local_costmap:
       update_frequency: 5.0
       publish_frequency: 2.0
       global_frame: odom
-      robot_base_frame: base_link
+      robot_base_frame: base_footprint
       use_sim_time: False
       rolling_window: true
       width: 5
@@ -202,7 +202,7 @@ global_costmap:
       update_frequency: 1.0
       publish_frequency: 1.0
       global_frame: map
-      robot_base_frame: base_link
+      robot_base_frame: base_footprint
       use_sim_time: False
       robot_radius: 0.1
       resolution: 0.05
@@ -275,7 +275,7 @@ recoveries_server:
     wait:
       plugin: "nav2_recoveries/Wait"
     global_frame: odom
-    robot_base_frame: base_link
+    robot_base_frame: base_footprint
     transform_timeout: 0.1
     use_sim_time: False
     simulate_ahead_time: 2.0

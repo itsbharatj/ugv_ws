@@ -247,7 +247,8 @@ void CLaserOdometry2DNode::publish()
   {
     RCLCPP_DEBUG(get_logger(), "Publishing TF: [base_link] to [odom]");
     geometry_msgs::msg::TransformStamped odom_trans;
-    odom_trans.header.stamp = rf2o_ref.last_odom_time;    // the time of the last scan used!
+    // Keep odometry messages tied to scan time, but publish TF at node time for Nav2.
+    odom_trans.header.stamp = this->get_clock()->now();
     odom_trans.header.frame_id = odom_frame_id;
     odom_trans.child_frame_id = base_frame_id;
     odom_trans.transform.translation.x = -1.0*rf2o_ref.robot_pose_.translation()(0);
