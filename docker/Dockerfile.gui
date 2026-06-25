@@ -1,0 +1,73 @@
+FROM ros:humble-ros-base-jammy
+
+ENV DEBIAN_FRONTEND=noninteractive
+SHELL ["/bin/bash", "-c"]
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash-completion \
+    ca-certificates \
+    curl \
+    dbus-x11 \
+    fluxbox \
+    iproute2 \
+    less \
+    locales \
+    mesa-utils \
+    nano \
+    novnc \
+    openssh-server \
+    python3-argcomplete \
+    python3-catkin-pkg \
+    python3-colcon-common-extensions \
+    python3-empy \
+    python3-lark \
+    python3-pip \
+    python3-yaml \
+    ros-humble-cartographer \
+    ros-humble-cartographer-ros \
+    ros-humble-desktop \
+    ros-humble-joint-state-publisher-gui \
+    ros-humble-libg2o \
+    ros-humble-nav2-bringup \
+    ros-humble-navigation2 \
+    ros-humble-rosbridge-suite \
+    ros-humble-rtabmap-ros \
+    ros-humble-rqt-common-plugins \
+    ros-humble-usb-cam \
+    sudo \
+    tmux \
+    vim \
+    websockify \
+    x11-utils \
+    x11vnc \
+    xterm \
+    xvfb \
+    libceres-dev \
+    libsuitesparse-dev \
+    && locale-gen en_US.UTF-8 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN mkdir -p /run/sshd \
+    && sed -i 's/^#\?PermitRootLogin .*/PermitRootLogin yes/' /etc/ssh/sshd_config \
+    && sed -i 's/^#\?PasswordAuthentication .*/PasswordAuthentication yes/' /etc/ssh/sshd_config \
+    && sed -i 's/^#\?X11Forwarding .*/X11Forwarding yes/' /etc/ssh/sshd_config \
+    && sed -i 's/^#\?X11UseLocalhost .*/X11UseLocalhost no/' /etc/ssh/sshd_config \
+    && grep -q '^Port 23' /etc/ssh/sshd_config || echo 'Port 23' >> /etc/ssh/sshd_config
+
+COPY ugv_ros_env.sh /etc/profile.d/ugv_ros_env.sh
+COPY entrypoint-gui.sh /usr/local/bin/ugv-gui-entrypoint
+
+RUN chmod +x /usr/local/bin/ugv-gui-entrypoint
+
+ENV LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8 \
+    DISPLAY=:1 \
+    UGV_MODEL=ugv_rover \
+    QT_X11_NO_MITSHM=1
+
+WORKDIR /home/bharat/ugv_ws
+
+EXPOSE 23 5901 6080
+
+ENTRYPOINT ["/usr/local/bin/ugv-gui-entrypoint"]
+CMD ["tail", "-f", "/dev/null"]

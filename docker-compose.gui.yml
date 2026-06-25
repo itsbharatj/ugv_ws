@@ -1,0 +1,24 @@
+services:
+  ugv_gui:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.gui
+    image: ugv_ws:humble-gui
+    container_name: ugv_jetson_ros_humble
+    network_mode: host
+    ipc: host
+    privileged: true
+    restart: unless-stopped
+    working_dir: /home/bharat/ugv_ws
+    environment:
+      DISPLAY: ":1"
+      ROOT_PASSWORD: "bharat"
+      VNC_PASSWORD: "bharat"
+      VNC_GEOMETRY: "1280x800x24"
+      UGV_MODEL: "ugv_rover"
+      ROS_DOMAIN_ID: "0"
+      QT_X11_NO_MITSHM: "1"
+    volumes:
+      - /home/bharat/ugv_ws:/home/bharat/ugv_ws
+      - /dev:/dev
+      - /tmp/.X11-unix:/tmp/.X11-unix
