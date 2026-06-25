@@ -13,6 +13,8 @@
   <test_depend>python3-pytest</test_depend>
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
+  <exec_depend>depthai_ros_driver</exec_depend>
+  <exec_depend>image_proc</exec_depend>
   <export>
     <build_type>ament_python</build_type>
   </export>
